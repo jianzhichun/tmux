@@ -1500,6 +1500,7 @@ window_pane_destroy(struct window_pane *wp)
 {
 	window_pane_wait_finish(wp);
 	spawn_editor_finish(wp);
+	kitty_free(wp);
 
 	RB_REMOVE(window_pane_tree, &all_window_panes, wp);
 	wp->flags |= PANE_DESTROYED;

@@ -1300,6 +1300,7 @@ struct visible_ranges {
 /* Child window structure. */
 struct window_pane {
 	u_int		 id;
+	struct kitty_pane *kitty;	/* kitty.c: bridged images */
 	int		 references;
 	u_int		 active_point;
 
@@ -3426,6 +3427,12 @@ void	 default_window_size(struct client *, struct session *, struct window *,
 void	 recalculate_size(struct window *, int);
 void	 recalculate_sizes(void);
 void	 recalculate_sizes_now(int);
+
+/* kitty.c */
+int		 kitty_apc(struct window_pane *, const char *);
+int		 kitty_placeholder(const struct utf8_data *);
+u_int		 kitty_map(struct window_pane *, int);
+void		 kitty_free(struct window_pane *);
 
 /* input.c */
 #define INPUT_BUF_DEFAULT_SIZE 1048576

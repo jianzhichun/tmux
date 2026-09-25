@@ -2687,10 +2687,21 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 	int			 yoff = 0, xoff = 0;
 	struct visible_ranges	*r;
 	struct visible_range	*ri;
+	struct grid_cell	 kitty_gc;
+	u_int			 kitty_id;
 
 	/* Ignore padding cells. */
 	if (gc->flags & GRID_FLAG_PADDING)
 		return;
+
+	/* A kitty placeholder names its image by colour: swap the program's id for
+	 * the global one its transmission was stored under (kitty.c). */
+	if (kitty_placeholder(ud) && (kitty_id = kitty_map(wp, gc->fg)) != 0) {
+		memcpy(&kitty_gc, gc, sizeof kitty_gc);
+		kitty_gc.fg = colour_join_rgb(kitty_id >> 16, (kitty_id >> 8) & 0xff,
+		    kitty_id & 0xff);
+		gc = &kitty_gc;
+	}
 
 	/* Get the previous cell to check for combining. */
 	if (screen_write_combine(ctx, gc) != 0)

@@ -2798,6 +2798,9 @@ input_exit_apc(struct input_ctx *ictx)
 
 	if (ictx->flags & INPUT_DISCARD)
 		return;
+	/* Kitty graphics: bridged to the image store, never a title (kitty.c). */
+	if (wp != NULL && kitty_apc(wp, (const char *)ictx->input_buf))
+		return;
 	log_debug("%s: \"%s\"", __func__, ictx->input_buf);
 
 	if (wp != NULL &&

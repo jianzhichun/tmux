@@ -173,6 +173,7 @@ dist_tmux_SOURCES = \
 	hyperlinks.c \
 	input-keys.c \
 	input.c \
+	kitty.c \
 	job.c \
 	key-bindings.c \
 	key-string.c \
