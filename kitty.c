@@ -56,6 +56,11 @@ struct kitty_pane {
 	u_int	 rows;
 	int	 png;
 	int	 active;
+
+	u_int	 run_id;	/* the placeholder run being written: id, and */
+	u_int	 run_x;		/* where its last cell went, so the rest of a */
+	u_int	 run_y;		/* row's cells can be dropped (kitty_anchor) */
+	int	 run_drop;	/* the cell just dropped: eat its marks too */
 };
 
 static const u_char kitty_placeholder_utf8[] = { 0xf4, 0x8e, 0xbb, 0xae };
@@ -66,6 +71,48 @@ kitty_placeholder(const struct utf8_data *ud)
 {
 	return (ud->size == sizeof kitty_placeholder_utf8 &&
 	    memcmp(ud->data, kitty_placeholder_utf8, ud->size) == 0);
+}
+
+/*
+ * Does this placeholder cell have to go in the grid?
+ *
+ * A program prints one placeholder per CELL of the picture -- 396 of them for a
+ * 36x11 box, every one carrying two combining marks. The browser needs far less: it
+ * draws the picture as a single element over those rows and reconstructs the
+ * top-left from any one cell's encoded (row, col), taking the size from the spool
+ * file's name. So only the first cell of each row's run is kept and the rest become
+ * blanks -- 36x11 goes from 396 cells to 11. It also removes what those extra cells
+ * did show: wherever the picture did not cover its box exactly, the uncovered column
+ * drew as the terminal's missing-glyph mark.
+ */
+int
+kitty_anchor(struct window_pane *wp, u_int id, u_int x, u_int y)
+{
+	struct kitty_pane	*kp = wp->kitty;
+	int			 keep;
+
+	if (kp == NULL)
+		return (1);
+	keep = !(kp->run_id == id && kp->run_y == y && kp->run_x + 1 == x);
+	kp->run_id = id;
+	kp->run_x = x;
+	kp->run_y = y;
+	kp->run_drop = !keep;
+	return (keep);
+}
+
+/*
+ * Is this zero-width mark one of a dropped cell's?
+ *
+ * A placeholder's two combining marks arrive as their own cells and tmux folds them
+ * onto whatever went in last. A dropped cell is a blank, so without this they would
+ * be folded onto the blank and drawn as accents beside the picture -- which is what
+ * the uncovered column of the box used to show.
+ */
+int
+kitty_dropped(struct window_pane *wp)
+{
+	return (wp != NULL && wp->kitty != NULL && wp->kitty->run_drop);
 }
 
 /* The global id a pane's placeholder colour stands for, or 0. */

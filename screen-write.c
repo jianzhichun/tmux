@@ -2694,13 +2694,24 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 	if (gc->flags & GRID_FLAG_PADDING)
 		return;
 
+	/* The marks of a placeholder cell kitty.c dropped go with it. */
+	if (width == 0 && kitty_dropped(wp))
+		return;
+
 	/* A kitty placeholder names its image by colour: swap the program's id for
 	 * the global one its transmission was stored under (kitty.c). */
 	if (kitty_placeholder(ud) && (kitty_id = kitty_map(wp, gc->fg)) != 0) {
 		memcpy(&kitty_gc, gc, sizeof kitty_gc);
-		kitty_gc.fg = colour_join_rgb(kitty_id >> 16, (kitty_id >> 8) & 0xff,
-		    kitty_id & 0xff);
+		if (kitty_anchor(wp, kitty_id, s->cx, s->cy)) {
+			kitty_gc.fg = colour_join_rgb(kitty_id >> 16,
+			    (kitty_id >> 8) & 0xff, kitty_id & 0xff);
+		} else {
+			/* One anchor a row is enough; the rest are blanks. */
+			utf8_set(&kitty_gc.data, ' ');
+			kitty_gc.fg = 8;
+		}
 		gc = &kitty_gc;
+		ud = &kitty_gc.data;
 	}
 
 	/* Get the previous cell to check for combining. */

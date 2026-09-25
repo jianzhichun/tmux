@@ -3431,6 +3431,8 @@ void	 recalculate_sizes_now(int);
 /* kitty.c */
 int		 kitty_apc(struct window_pane *, const char *);
 int		 kitty_placeholder(const struct utf8_data *);
+int		 kitty_anchor(struct window_pane *, u_int, u_int, u_int);
+int		 kitty_dropped(struct window_pane *);
 u_int		 kitty_map(struct window_pane *, int);
 void		 kitty_free(struct window_pane *);
 
